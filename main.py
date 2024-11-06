@@ -33,6 +33,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 GITHUB_CLIENT_ID = config("GITHUB_CLIENT_ID") 
 GITHUB_CLIENT_SECRET = config("GITHUB_CLIENT_SECRET") 
 
+usernames = ["jeffreywangdev"]
 
 def create_token(username):
     """Creates a new token for the given username."""
@@ -63,6 +64,13 @@ def get_current_user(request: Request):
         if username:
             return username
     raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Authentication required")
+
+def cheek_user(request: Request):
+    """Gets the current user based on the token in the request."""
+    user = get_current_user(request)
+    if user.lower() not in usernames:
+        raise HTTPException(status_code=403, detail="You are not authorized to do this")
+    return user
 
 @app.get("/auth/login")
 async def github_login(request: Request):
@@ -113,16 +121,16 @@ async def read_root(request: Request):
     user = None
     try:
         user = get_current_user(request)
-        if user.lower() != "jeffreywangdev":
+        if user.lower() not in usernames:
             user = None
     except:
         pass
-    return templates.TemplateResponse("index.html", {"request": request, "deployments": deployments, "user": user})
+    return templates.TemplateResponse("index.html", {"request": request, "deployments": deployments, "user": user,"main_domain":MAIN_DOMAIN})
 
 @app.post("/deploy", response_class=JSONResponse)
 async def deploy_server(request: Request, current_user: str = Depends(get_current_user)):
-    allowed_users = ["jeffreywangdev"] 
-    if current_user.lower() in allowed_users:
+    cheek_user(request)
+    if current_user.lower() in usernames:
         form_data = await request.form()
         image_link = form_data.get("image_link")
         name = form_data.get("name")
@@ -138,6 +146,7 @@ async def deploy_server(request: Request, current_user: str = Depends(get_curren
 
 @app.post("/remove/{name}", response_class=RedirectResponse)
 async def remove_server_route(name: str, request: Request, current_user: str = Depends(get_current_user)):
+    cheek_user(request)
     if remove_server(name):
         return RedirectResponse(url="/", status_code=303)
     else:
@@ -146,6 +155,7 @@ async def remove_server_route(name: str, request: Request, current_user: str = D
 
 @app.post("/stop/{name}", response_class=RedirectResponse)
 async def stop_server_route(name: str,  request: Request, current_user: str = Depends(get_current_user)):
+    cheek_user(request)
     if stop_server(name):
         return RedirectResponse(url="/", status_code=303)
     else:
@@ -154,6 +164,7 @@ async def stop_server_route(name: str,  request: Request, current_user: str = De
 
 @app.post("/start/{name}", response_class=RedirectResponse)
 async def start_server_route(name: str, request: Request, current_user: str = Depends(get_current_user)):
+    cheek_user(request)
     if start_server(name):
          return RedirectResponse(url="/", status_code=303)
     else:
@@ -165,6 +176,6 @@ async def logout(request: Request):
     response.delete_cookie(key="access_token") 
     return response
 
-
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
+    

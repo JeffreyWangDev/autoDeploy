@@ -2,7 +2,6 @@
 <html>
 <head>
   <title>Server Deployments</title>
-  <link rel="stylesheet" href="/static/style.css">
   <script>
     async function deployServer() {
       const name = document.getElementById("name").value;
@@ -57,14 +56,17 @@
           <th>Port</th>
           <th>Status</th>
           <th>Image Link</th>
+          {% if user %}
           <th>Actions</th>
+          {% endif %}
         </tr>
       </thead>
       <tbody>
         {% for deployment in deployments %}
         <tr>
           <td>{{ deployment[1] }}</td>
-          <td>{{ deployment[2] }}</td>
+          <td><a href="{{ 'https://' + deployment[2] + '.' +main_domain }}" target="_blank">{{ deployment[2] }}</a></td>
+          
           <td>{{ deployment[4] }}</td>
           <td>
             {% if deployment[7] == 1 %}
@@ -74,8 +76,9 @@
             {% endif %}
           </td>
           <td>
-            <a href="{{ deployment[5] }}" target="_blank">{{ deployment[5] }}</a>
+            <a href="{{ 'https://' + deployment[5] }}" target="_blank">{{ deployment[5] }}</a>
           </td>
+          {% if user %}
           <td>
             <form method="post" action="/remove/{{ deployment[1] }}">
               <button type="submit">Remove</button>
@@ -90,12 +93,12 @@
               </form>
             {% endif %}
           </td>
+          {% endif %}
         </tr>
         {% endfor %}
       </tbody>
     </table>
     {% if user %}
-
     <h2>Deploy New Server</h2>
     <form id="deploy-form">
       <label for="name">Name:</label>

@@ -3,6 +3,8 @@ import re
 import sqlite3
 import docker
 
+MAIN_DOMAIN = "jeffrey.hackclub.app"
+
 def create_database_table(db_path="server_deployments.db"):
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
@@ -85,7 +87,7 @@ def run_docker_container(image_link, container_name, port, extra_flags=None):
     
 def deploy_new_server(image_link, name, docker_flags=None, db_path="server_deployments.db"): 
     """Deploys a new server and saves data to an SQLite database."""
-    main_domain = "jeffrey.hackclub.app"
+    main_domain = MAIN_DOMAIN
     create_database_table(db_path)
     
     port = get_open_port()
