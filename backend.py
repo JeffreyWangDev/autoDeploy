@@ -53,29 +53,22 @@ def register_subdomain(subdomain, main_domain, port):
 def run_docker_container(image_link, container_name, port, extra_flags=None):
     """Runs a Docker container using the docker-py library."""
     try:
-        client = docker.from_env() 
-
+        
+        client = docker.DockerClient(base_url='unix:///run/user/2456/docker.sock')
         port_mappings = {80: port} 
 
         environment = {}
         if extra_flags:
-            for i in range(0, len(extra_flags), 2): 
-                if extra_flags[i] == "-e":
-                    environment[extra_flags[i+1].split("=")[0]] = extra_flags[i+1].split("=")[1]
-            cleaned_extra_flags = [flag for flag in extra_flags if flag != "-e"]
-        else:
-            cleaned_extra_flags = None
-
-
-
+            for i in extra_flags.split(): 
+                if i.startswith("-e"):
+                    environment[i.split("=")[0].replace("-e","")] = i.split("=")[1]
 
         container = client.containers.run(
             image_link,
             name=container_name,
             ports=port_mappings,
             detach=True,
-            environment=environment, 
-            volumes = cleaned_extra_flags
+            environment=environment
         )
 
         print(f"Docker container '{container_name}' started (detached mode - docker-py). Container ID: {container.id}")
@@ -106,7 +99,7 @@ def deploy_new_server(image_link, name, docker_flags=None, db_path="server_deplo
             conn = sqlite3.connect(db_path)
             cursor = conn.cursor()
 
-            flags_string = ", ".join(docker_flags) if docker_flags else None  
+            flags_string = docker_flags
 
             cursor.execute('''
                 INSERT INTO deployments (name, subdomain, main_domain, port, image_link, extra_flags)
@@ -133,7 +126,7 @@ def deploy_new_server(image_link, name, docker_flags=None, db_path="server_deplo
 def remove_server(name, db_path="server_deployments.db"):
     """Removes a server, including its Docker container, Caddy config, and database entry."""
     try:
-        client = docker.from_env()
+        client = docker.DockerClient(base_url='unix:///run/user/2456/docker.sock')
         container = client.containers.get(name) 
         container.stop()
         container.remove()
@@ -172,7 +165,7 @@ def remove_server(name, db_path="server_deployments.db"):
 def stop_server(name, db_path="server_deployments.db"):
     """Stops a server's Docker container and updates its status in the database."""
     try:
-        client = docker.from_env()
+        client = docker.DockerClient(base_url='unix:///run/user/2456/docker.sock')
         container = client.containers.get(name)
         container.stop()
         print(f"Docker container '{name}' stopped.")
@@ -196,7 +189,7 @@ def stop_server(name, db_path="server_deployments.db"):
 
 def start_server(name, db_path="server_deployments.db"):
     try:
-        client = docker.from_env()
+        client = docker.DockerClient(base_url='unix:///run/user/2456/docker.sock')
         container = client.containers.get(name)
         container.start()
         print(f"Docker container '{name}' started.")

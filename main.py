@@ -1,67 +1,46 @@
-import subprocess
-import re
+
 import sqlite3
-import docker
 import uvicorn
 from fastapi import FastAPI, HTTPException, Depends, Request
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from fastapi.security import HTTPBasicCredentials
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from starlette.status import HTTP_401_UNAUTHORIZED
-from typing import List, Optional
 import secrets
-import hashlib  # For hashing tokens
-import time  # For token expiration
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from fastapi.security import OAuth2
+import hashlib
+import time 
+from fastapi.security import OAuth2PasswordBearer
 from fastapi.templating import Jinja2Templates
 from starlette.config import Config
 from starlette.requests import Request
 from starlette.responses import RedirectResponse
-from typing import Optional
 import requests
 from fastapi.exceptions import HTTPException
-from fastapi import FastAPI, Form
+from fastapi import FastAPI
 from backend import *
 create_database_table()
-# ... (Your existing functions: create_database_table, get_open_port, 
-#      register_subdomain, run_docker_container, deploy_new_server,
-#      remove_server, stop_server, start_server) ...
 
 app = FastAPI()
-templates = Jinja2Templates(directory="templates")  # Create a 'templates' directory
+templates = Jinja2Templates(directory="templates")
 
-# Token settings
-TOKEN_SECRET = secrets.token_hex(32)  # Replace with a strong secret key
-TOKEN_EXPIRE_SECONDS = 30 * 60  # 30 minutes
+TOKEN_SECRET = secrets.token_hex(32) 
+TOKEN_EXPIRE_SECONDS = 30 * 60 
 
-# Store active tokens in a dictionary (replace with a database in a real app)
 active_tokens = {} 
 
-# Github OAuth2 settings
 config = Config(".env")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-GITHUB_CLIENT_ID = config("GITHUB_CLIENT_ID")  # Replace with your GitHub Client ID
-GITHUB_CLIENT_SECRET = config("GITHUB_CLIENT_SECRET")  # Replace with your GitHub Client Secret
-
-# --- User Authentication ---
-def authenticate_user(credentials: HTTPBasicCredentials):
-    """Verifies username/password (replace with database check in a real app)."""
-    correct_username = "admin"  # Replace with actual admin username
-    correct_password = "password"  # Replace with actual admin password
-
-    if credentials.username == correct_username and credentials.password == correct_password:
-        return True
-    return False
+GITHUB_CLIENT_ID = config("GITHUB_CLIENT_ID") 
+GITHUB_CLIENT_SECRET = config("GITHUB_CLIENT_SECRET") 
 
 
 def create_token(username):
     """Creates a new token for the given username."""
-    token = secrets.token_urlsafe(32)  # Generate a random token
+    token = secrets.token_urlsafe(32)
     hashed_token = hashlib.sha256(f"{TOKEN_SECRET}{token}".encode()).hexdigest()
     active_tokens[hashed_token] = {
         "username": username,
-        "expires_at": time.time() + TOKEN_EXPIRE_SECONDS,  # Set expiration time
+        "expires_at": time.time() + TOKEN_EXPIRE_SECONDS,
     }
     return hashed_token
 
@@ -72,22 +51,19 @@ def validate_token(token):
         if active_tokens[token]["expires_at"] > time.time():
             return active_tokens[token]["username"]
         else:
-            del active_tokens[token]  # Remove expired token
+            del active_tokens[token] 
     return None
 
 
 def get_current_user(request: Request):
     """Gets the current user based on the token in the request."""
-    token = request.cookies.get("access_token")  # Read from cookie
+    token = request.cookies.get("access_token") 
     if token:
         username = validate_token(token)
         if username:
             return username
     raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Authentication required")
 
-# --- End User Authentication ---
-
-# --- Github OAuth2 ---
 @app.get("/auth/login")
 async def github_login(request: Request):
     """Initiates the GitHub OAuth2 flow."""
@@ -99,7 +75,6 @@ async def github_login(request: Request):
 async def github_callback(request: Request, code: str):
     """Handles the GitHub OAuth2 callback."""
 
-    # Exchange the code for an access token
     data = {
         "client_id": GITHUB_CLIENT_ID,
         "client_secret": GITHUB_CLIENT_SECRET,
@@ -110,15 +85,13 @@ async def github_callback(request: Request, code: str):
     if response.status_code == 200:
         access_token = response.json()["access_token"]
 
-        # Get user information using the access token
         headers = {"Authorization": f"token {access_token}"}
         user_response = requests.get("https://api.github.com/user", headers=headers)
 
         if user_response.status_code == 200:
             user_data = user_response.json()
-            username = user_data["login"]  # You can use other user data as needed
+            username = user_data["login"]
 
-            # Generate a custom token (replace with a secure token generation strategy)
             token = create_token(username)
 
             response = RedirectResponse(url="/", status_code=303)
@@ -129,12 +102,10 @@ async def github_callback(request: Request, code: str):
     else:
         raise HTTPException(status_code=400, detail="Error exchanging code for access token")
 
-# --- End Github OAuth2 ---
 
-# --- FastAPI Routes ---
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
-    conn = sqlite3.connect("server_deployments.db")  # Replace with your DB path if needed
+    conn = sqlite3.connect("server_deployments.db")
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM deployments")
     deployments = cursor.fetchall()
@@ -142,19 +113,20 @@ async def read_root(request: Request):
     user = None
     try:
         user = get_current_user(request)
-        
+        if user.lower() != "jeffreywangdev":
+            user = None
     except:
         pass
     return templates.TemplateResponse("index.html", {"request": request, "deployments": deployments, "user": user})
 
 @app.post("/deploy", response_class=JSONResponse)
 async def deploy_server(request: Request, current_user: str = Depends(get_current_user)):
-    allowed_users = ["jeffreywangdev"]  # Replace with your allowed usernames
+    allowed_users = ["jeffreywangdev"] 
     if current_user.lower() in allowed_users:
         form_data = await request.form()
         image_link = form_data.get("image_link")
         name = form_data.get("name")
-        extra_flags = form_data.get("extra_flags").split() # Split flags into a list
+        extra_flags = form_data.get("extra_flags")
 
         if deploy_new_server(image_link, name, extra_flags):
             return JSONResponse({"message": "Server deployed successfully!"})
@@ -190,10 +162,9 @@ async def start_server_route(name: str, request: Request, current_user: str = De
 @app.get("/logout", response_class=RedirectResponse)
 async def logout(request: Request):
     response = RedirectResponse(url="/", status_code=303)
-    response.delete_cookie(key="access_token")  # Delete the cookie
+    response.delete_cookie(key="access_token") 
     return response
 
-# --- End FastAPI Routes ---
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

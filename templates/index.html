@@ -4,7 +4,34 @@
   <title>Server Deployments</title>
   <link rel="stylesheet" href="/static/style.css">
   <script>
-    // ... (Your existing deployServer() function) ...
+    async function deployServer() {
+      const name = document.getElementById("name").value;
+      const imageLink = document.getElementById("image_link").value;
+      const extraFlags = document.getElementById("extra_flags").value;
+
+      try {
+        const response = await fetch("/deploy", {
+          method: "POST",
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: `name=${name}&image_link=${imageLink}&extra_flags=${extraFlags}`
+        });
+
+        if (response.ok) {
+          // Update the deployment table or display a success message
+          alert("Server deployed successfully!");
+          // You could also refresh the deployment table here
+          location.reload(); // Refresh the page to get updated data
+        } else {
+          const error = await response.text();
+          alert("Error deploying server: " + error);
+        }
+      } catch (error) {
+        console.error("Error deploying server:", error);
+        alert("An error occurred while deploying the server.");
+      }
+    }
   </script>
 </head>
 <body>
