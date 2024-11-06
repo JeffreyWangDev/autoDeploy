@@ -1,0 +1,5 @@
+starlette==0.41.2
+fastapi==0.115.4
+docker==7.1.0
+fastapi-cli==0.0.5
+requests==2.32.3

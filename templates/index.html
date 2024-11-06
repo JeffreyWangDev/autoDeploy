@@ -47,6 +47,35 @@
         alert("An error occurred while repulling and rerunning the server.");
       }
     }
+    async function getContainerLogs(name) {
+      try {
+        const response = await fetch(`/container_logs?name=${name}`, {
+          method: "GET",
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const logsContainer = document.getElementById("logs-container");
+          logsContainer.innerHTML = ""; // Clear existing logs
+
+          data.logs.forEach(logLine => {
+            const logEntry = document.createElement("div");
+            logEntry.classList.add("log-entry");
+            logEntry.textContent = logLine;
+            logsContainer.appendChild(logEntry);
+          });
+
+          logsContainer.style.display = "block"; // Show the logs container
+        } else {
+          const error = await response.text();
+          alert("Error fetching logs: " + error);
+        }
+      } catch (error) {
+        console.error("Error fetching logs:", error);
+        alert("An error occurred while fetching logs.");
+      }
+    }
+    
   </script>
 </head>
 <body>
@@ -111,6 +140,7 @@
                   </form>
                 {% endif %}
                 <button type="button" onclick="repullRerunServer('{{ deployment[1] }}')">Repull & Rerun</button>
+                <button type="button" onclick="getContainerLogs('{{ deployment[1] }}')">View Logs</button>
               </div>
             </div>
           </td>
@@ -135,10 +165,99 @@
       <button type="button" onclick="deployServer()">Deploy</button>
     </form>
     {% endif %}
+    <div class="logs-container" id="logs-container" style="display: none;">
+    </div>
   </main>
 </body>
 <style>
+  .dropdown {
+    position: relative;
+    display: inline-block;
+  }
 
+  .dropbtn {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 20px;
+    font-size: 16px;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+
+  .dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #f9f9f9;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1;
+    border-radius: 4px;
+  }
+
+  .dropdown-content button {
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    text-align: left;
+    width: 100%;
+    border: none;
+    background-color: #f9f9f9;
+    border-bottom: 1px solid #ddd;
+    cursor: pointer;
+  }
+
+  .dropdown-content button:hover {
+    background-color: #f1f1f1;
+  }
+
+  .dropdown:hover .dropdown-content {
+    display: block;
+  }
+
+  .logs-container {
+    height: 400px; /* Adjust height as needed */
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 10px;
+    margin-top: 20px;
+  }
+
+  .log-entry {
+    margin-bottom: 5px;
+    padding: 5px;
+    border-radius: 4px;
+  }
+
+  .log-level {
+    font-weight: bold;
+  }
+
+  .log-level.info {
+    color: #2196F3; /* Blue for info */
+  }
+
+  .log-level.warning {
+    color: #FFC107; /* Yellow for warning */
+  }
+
+  .log-level.error {
+    color: #f44336; /* Red for error */
+  }
+
+  .search-bar {
+    margin-bottom: 10px;
+  }
+
+  .search-bar input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+  }
   .dropdown {
     position: relative;
     display: inline-block;

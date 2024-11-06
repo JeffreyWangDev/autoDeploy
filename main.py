@@ -2,7 +2,6 @@
 import sqlite3
 import uvicorn
 from fastapi import FastAPI, HTTPException, Depends, Request
-from fastapi.security import HTTPBasicCredentials
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from starlette.status import HTTP_401_UNAUTHORIZED
@@ -18,6 +17,8 @@ import requests
 from fastapi.exceptions import HTTPException
 from fastapi import FastAPI
 from backend import *
+
+
 create_database_table()
 
 app = FastAPI()
@@ -113,6 +114,7 @@ async def github_callback(request: Request, code: str):
 
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
+    update_all_status()
     conn = sqlite3.connect("server_deployments.db")
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM deployments")
@@ -143,7 +145,6 @@ async def deploy_server(request: Request, current_user: str = Depends(get_curren
     else:
         raise HTTPException(status_code=403, detail="You are not authorized to deploy servers")
 
-
 @app.post("/remove/{name}", response_class=RedirectResponse)
 async def remove_server_route(name: str, request: Request, current_user: str = Depends(get_current_user)):
     cheek_user(request)
@@ -152,7 +153,6 @@ async def remove_server_route(name: str, request: Request, current_user: str = D
     else:
         raise HTTPException(status_code=500, detail=f"Failed to remove server '{name}'.")
 
-
 @app.post("/stop/{name}", response_class=RedirectResponse)
 async def stop_server_route(name: str,  request: Request, current_user: str = Depends(get_current_user)):
     cheek_user(request)
@@ -160,7 +160,6 @@ async def stop_server_route(name: str,  request: Request, current_user: str = De
         return RedirectResponse(url="/", status_code=303)
     else:
         raise HTTPException(status_code=500, detail=f"Failed to stop server '{name}'.")
-
 
 @app.post("/start/{name}", response_class=RedirectResponse)
 async def start_server_route(name: str, request: Request, current_user: str = Depends(get_current_user)):
@@ -179,7 +178,7 @@ async def logout(request: Request):
 @app.post("/repull_rerun/{name}", response_class=JSONResponse)
 async def repull_rerun_server(name: str, request: Request, current_user: str = Depends(get_current_user)):
     cheek_user(request)
-    conn = sqlite3.connect("server_deployments.db")  # Replace with your DB path if needed
+    conn = sqlite3.connect("server_deployments.db")
     cursor = conn.cursor()
     cursor.execute("SELECT image_link, extra_flags, port FROM deployments WHERE name=?", (name,))
     deployment = cursor.fetchone()
@@ -194,7 +193,21 @@ async def repull_rerun_server(name: str, request: Request, current_user: str = D
     else:
         raise HTTPException(status_code=404, detail=f"Server '{name}' not found.")
 
+@app.get("/logs", response_class=HTMLResponse)
+async def get_server_logs(request: Request):
+    cheek_user(request)
+    try:
+        with open("server_logs.txt", "r") as f:
+            logs = f.readlines()
+        return templates.TemplateResponse("logs.html", {"request": request, "logs": logs})
+    except FileNotFoundError:
+        return HTMLResponse("<h1>No logs found.</h1>")
+
+@app.get("/container_logs", response_class=JSONResponse)
+def container_logs(name: str, request: Request):
+    cheek_user(request)
+    logs = get_container_logs(name)
+    return JSONResponse({"logs": logs})
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
-    

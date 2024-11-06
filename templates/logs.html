@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Server Logs</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
+      color: #333;
+    }
+
+    header {
+      background-color: #333;
+      color: #fff;
+      padding: 20px;
+      text-align: center;
+    }
+
+    main {
+      padding: 20px;
+      max-width: 900px;
+      margin: 20px auto;
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+      margin-top: 0;
+      text-align: center;
+    }
+
+    .logs-container {
+      height: 400px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 10px;
+    }
+
+    .log-entry {
+      margin-bottom: 5px;
+      padding: 5px;
+      border-radius: 4px;
+    }
+
+    .log-level {
+      font-weight: bold;
+    }
+
+    .log-level.info {
+      color: #2196F3; 
+    }
+
+    .log-level.warning {
+      color: #FFC107;
+    }
+
+    .log-level.error {
+      color: #f44336; 
+    }
+
+    .search-bar {
+      margin-bottom: 10px;
+    }
+
+    .search-bar input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+  </style>
+</head>
+<body>
+    <header>
+      <h1>Server Logs</h1>
+    </header>
+  
+    <main>
+      <h2>Server Logs</h2>
+      <div class="search-bar">
+        <input type="text" id="search-input" placeholder="Search logs...">
+      </div>
+      <div class="logs-container" id="logs-container">
+        {% for log_line in logs %}
+        <div class="log-entry" id="log-{{ log_line.strip() }}">
+          <span class="log-level" id="log-level"></span>: {{ log_line.strip() }} 
+        </div>
+        {% endfor %}
+      </div>
+    </main>
+  
+    <script>
+      const searchInput = document.getElementById("search-input");
+      const logsContainer = document.getElementById("logs-container");
+  
+      searchInput.addEventListener("input", function() {
+        const searchTerm = this.value.toLowerCase();
+        const logEntries = logsContainer.querySelectorAll(".log-entry");
+  
+        logEntries.forEach(entry => {
+          const message = entry.textContent.toLowerCase();
+          if (message.includes(searchTerm)) {
+            entry.style.display = "block";
+          } else {
+            entry.style.display = "none";
+          }
+        });
+      });
+  
+      function showAllLogsAndJump(logId) {
+        const logEntries = logsContainer.querySelectorAll(".log-entry");
+        logEntries.forEach(entry => {
+          entry.style.display = "block";
+        });
+        const clickedLog = document.getElementById(logId);
+        clickedLog.scrollIntoView({ behavior: 'smooth' }); 
+      }
+  
+      const logEntries = logsContainer.querySelectorAll(".log-entry");
+      logEntries.forEach(entry => {
+          const logLevelSpan = entry.querySelector("#log-level");
+          const regex = /.*(INFO|WARNING|ERROR|DEBUG)/;
+          const match = regex.exec(entry.textContent);
+          if (match) {
+              const logLevel = match[1];
+              logLevelSpan.textContent = logLevel;
+  
+              if (logLevel === "INFO") {
+                  logLevelSpan.classList.add("info");
+              } else if (logLevel === "WARNING") {
+                  logLevelSpan.classList.add("warning");
+              } else if (logLevel === "ERROR") {
+                  logLevelSpan.classList.add("error");
+              }
+          }
+          entry.addEventListener("click", function() {
+            showAllLogsAndJump(this.id); 
+        });
+      });
+    </script>
+
+
+  </body>
+  </html>
