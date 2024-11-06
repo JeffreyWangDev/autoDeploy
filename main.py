@@ -4,6 +4,7 @@ import sqlite3
 import docker
 import uvicorn
 from fastapi import FastAPI, HTTPException, Depends, Request
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from starlette.status import HTTP_401_UNAUTHORIZED
@@ -11,7 +12,7 @@ from typing import List, Optional
 import secrets
 import hashlib  # For hashing tokens
 import time  # For token expiration
-from fastapi.security import HTTPBasicCredentials, OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.security import OAuth2
 from fastapi.templating import Jinja2Templates
 from starlette.config import Config
@@ -22,6 +23,7 @@ import requests
 from fastapi.exceptions import HTTPException
 from fastapi import FastAPI, Form
 from backend import *
+create_database_table()
 # ... (Your existing functions: create_database_table, get_open_port, 
 #      register_subdomain, run_docker_container, deploy_new_server,
 #      remove_server, stop_server, start_server) ...
@@ -89,7 +91,7 @@ def get_current_user(request: Request):
 @app.get("/auth/login")
 async def github_login(request: Request):
     """Initiates the GitHub OAuth2 flow."""
-    url = f"https://github.com/login/oauth/authorize?client_id={GITHUB_CLIENT_ID}&scope=user:email"
+    url = f"https://github.com/login/oauth/authorize?client_id={GITHUB_CLIENT_ID}&scope=user"
     return RedirectResponse(url=url)
 
 
@@ -115,8 +117,7 @@ async def github_callback(request: Request, code: str):
         if user_response.status_code == 200:
             user_data = user_response.json()
             username = user_data["login"]  # You can use other user data as needed
-            if username.lower() !="jeffreywangdev":
-                raise HTTPException(status_code=401, detail="You are not authorized to access this page")
+
             # Generate a custom token (replace with a secure token generation strategy)
             token = create_token(username)
 
@@ -132,26 +133,35 @@ async def github_callback(request: Request, code: str):
 
 # --- FastAPI Routes ---
 @app.get("/", response_class=HTMLResponse)
-async def read_root(request: Request, current_user: str = Depends(get_current_user)):
+async def read_root(request: Request):
     conn = sqlite3.connect("server_deployments.db")  # Replace with your DB path if needed
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM deployments")
     deployments = cursor.fetchall()
     conn.close()
-    return templates.TemplateResponse("index.html", {"request": request, "deployments": deployments, "user": current_user})
+    user = None
+    try:
+        user = get_current_user(request)
+        
+    except:
+        pass
+    return templates.TemplateResponse("index.html", {"request": request, "deployments": deployments, "user": user})
 
 @app.post("/deploy", response_class=JSONResponse)
 async def deploy_server(request: Request, current_user: str = Depends(get_current_user)):
-    form_data = await request.form()
-    image_link = form_data.get("image_link")
-    main_domain = form_data.get("main_domain") 
-    name = form_data.get("name")
-    extra_flags = form_data.get("extra_flags").split() # Split flags into a list
+    allowed_users = ["jeffreywangdev"]  # Replace with your allowed usernames
+    if current_user.lower() in allowed_users:
+        form_data = await request.form()
+        image_link = form_data.get("image_link")
+        name = form_data.get("name")
+        extra_flags = form_data.get("extra_flags").split() # Split flags into a list
 
-    if deploy_new_server(image_link, main_domain, name, extra_flags):
-        return JSONResponse({"message": "Server deployed successfully!"})
+        if deploy_new_server(image_link, name, extra_flags):
+            return JSONResponse({"message": "Server deployed successfully!"})
+        else:
+            raise HTTPException(status_code=500, detail="Server deployment failed.")
     else:
-        raise HTTPException(status_code=500, detail="Server deployment failed.")
+        raise HTTPException(status_code=403, detail="You are not authorized to deploy servers")
 
 
 @app.post("/remove/{name}", response_class=RedirectResponse)

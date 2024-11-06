@@ -15,7 +15,7 @@
         <p>Logged in as: {{ user }}</p>
         <a href="/logout">Logout</a>
       {% else %}
-        <a href="/login">Login</a>
+        <a href="/auth/login">Login</a>
       {% endif %}
     </nav>
   </header>
@@ -67,6 +67,7 @@
         {% endfor %}
       </tbody>
     </table>
+    {% if user %}
 
     <h2>Deploy New Server</h2>
     <form id="deploy-form">
@@ -81,6 +82,7 @@
 
       <button type="button" onclick="deployServer()">Deploy</button>
     </form>
+    {% endif %}
   </main>
 </body>
 <style>
