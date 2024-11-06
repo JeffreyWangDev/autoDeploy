@@ -22,7 +22,6 @@ def create_database_table(db_path="server_deployments.db"):
     ''')
     conn.commit()
     conn.close()
-
 def get_open_port(is_last=False):
     cmd = [ "nest", "get_port"]
     output = subprocess.Popen( cmd, stdout=subprocess.PIPE ).communicate()[0]
