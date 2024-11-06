@@ -1,1 +1,4 @@
 .env
+server_deployments.db
+__pycache__/*
+.venv/*
