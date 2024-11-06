@@ -208,4 +208,43 @@ def start_server(name, db_path="server_deployments.db"):
     except Exception as e:
         print(f"An error occurred: {e}")
         return False  
+
+
+def repull_rerun_container(image_link, container_name, port, extra_flags=None):
+    try:
+        client = docker.DockerClient(base_url='unix:///run/user/2456/docker.sock')
+
+        client.images.pull(image_link)
+
+        port_mappings = {80: port} 
+
+        environment = {}
+        if extra_flags:
+            for i in extra_flags.split(): 
+                if i.startswith("-e"):
+                    environment[i.split("=")[0].replace("-e","")] = i.split("=")[1]
+
+
+        try:
+            client.containers.get(container_name).remove(force=True)
+        except docker.errors.NotFound:
+            pass 
+
+        container = client.containers.run(
+            image_link,
+            name=container_name,
+            ports=port_mappings,
+            detach=True,
+            environment=environment
+        )
+
+        print(f"Docker container '{container_name}' started (detached mode - docker-py). Container ID: {container.id}")
+        return True
+
+    except docker.errors.APIError as e:
+        print(f"Error running Docker container: {e}")
+        return False
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return False
     

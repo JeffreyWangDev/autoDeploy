@@ -18,10 +18,8 @@
         });
 
         if (response.ok) {
-          // Update the deployment table or display a success message
           alert("Server deployed successfully!");
-          // You could also refresh the deployment table here
-          location.reload(); // Refresh the page to get updated data
+          location.reload(); 
         } else {
           const error = await response.text();
           alert("Error deploying server: " + error);
@@ -29,6 +27,24 @@
       } catch (error) {
         console.error("Error deploying server:", error);
         alert("An error occurred while deploying the server.");
+      }
+    }
+    async function repullRerunServer(name) {
+      try {
+        const response = await fetch(`/repull_rerun/${name}`, {
+          method: "POST",
+        });
+
+        if (response.ok) {
+          alert("Server repull and rerun successful!");
+          location.reload();
+        } else {
+          const error = await response.text();
+          alert("Error repulling and rerunning server: " + error);
+        }
+      } catch (error) {
+        console.error("Error repulling and rerunning server:", error);
+        alert("An error occurred while repulling and rerunning the server.");
       }
     }
   </script>
@@ -66,7 +82,6 @@
         <tr>
           <td>{{ deployment[1] }}</td>
           <td><a href="{{ 'https://' + deployment[2] + '.' +main_domain }}" target="_blank">{{ deployment[2] }}</a></td>
-          
           <td>{{ deployment[4] }}</td>
           <td>
             {% if deployment[7] == 1 %}
@@ -79,25 +94,32 @@
             <a href="{{ 'https://' + deployment[5] }}" target="_blank">{{ deployment[5] }}</a>
           </td>
           {% if user %}
-          <td>
-            <form method="post" action="/remove/{{ deployment[1] }}">
-              <button type="submit">Remove</button>
-            </form>
-            {% if deployment[7] == 1 %}
-              <form method="post" action="/stop/{{ deployment[1] }}">
-                <button type="submit">Stop</button>
-              </form>
-            {% else %}
-              <form method="post" action="/start/{{ deployment[1] }}">
-                <button type="submit">Start</button>
-              </form>
-            {% endif %}
+          <td class="actions">
+            <div class="dropdown">
+              <button class="dropbtn">Actions</button>
+              <div class="dropdown-content">
+                <form method="post" action="/remove/{{ deployment[1] }}">
+                  <button type="submit">Remove</button>
+                </form>
+                {% if deployment[7] == 1 %}
+                  <form method="post" action="/stop/{{ deployment[1] }}">
+                    <button type="submit">Stop</button>
+                  </form>
+                {% else %}
+                  <form method="post" action="/start/{{ deployment[1] }}">
+                    <button type="submit">Start</button>
+                  </form>
+                {% endif %}
+                <button type="button" onclick="repullRerunServer('{{ deployment[1] }}')">Repull & Rerun</button>
+              </div>
+            </div>
           </td>
           {% endif %}
         </tr>
         {% endfor %}
       </tbody>
     </table>
+
     {% if user %}
     <h2>Deploy New Server</h2>
     <form id="deploy-form">
@@ -116,88 +138,155 @@
   </main>
 </body>
 <style>
-    body {
-        font-family: sans-serif;
-        margin: 0;
-        padding: 0;
-        background-color: #f4f4f4;
-        color: #333;
-      }
-      
-      header {
-        background-color: #333;
-        color: #fff;
-        padding: 20px;
-      }
-      
-      nav {
-        text-align: right;
-      }
-      
-      main {
-        padding: 20px;
-        max-width: 800px;
-        margin: 20px auto;
-        background-color: #fff;
-        border-radius: 8px;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-      }
-      
-      h2 {
-        margin-top: 0;
-      }
-      
-      table.deployments {
-        width: 100%;
-        border-collapse: collapse;
-        margin-bottom: 20px;
-      }
-      
-      th, td {
-        padding: 10px;
-        text-align: left;
-        border-bottom: 1px solid #ddd;
-      }
-      
-      th {
-        background-color: #f0f0f0;
-      }
-      
-      .status {
-        padding: 5px 10px;
-        border-radius: 4px;
-      }
-      
-      .status.online {
-        background-color: #4CAF50;
-        color: #fff;
-      }
-      
-      .status.offline {
-        background-color: #f44336;
-        color: #fff;
-      }
-      
-      button {
-        background-color: #4CAF50;
-        color: #fff;
-        border: none;
-        padding: 10px 20px;
-        text-align: center;
-        text-decoration: none;
-        display: inline-block;
-        font-size: 16px;
-        margin: 4px 2px;
-        border-radius: 4px;
-        cursor: pointer;
-      }
-      
-      button:hover {
-        background-color: #45a049;
-      }
-      
-      form {
-        display: inline-block;
-      }
+
+  .dropdown {
+    position: relative;
+    display: inline-block;
+  }
+
+  .dropbtn {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 20px;
+    font-size: 16px;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+
+  .dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #f9f9f9;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1;
+    border-radius: 4px;
+  }
+
+  .dropdown-content button {
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    text-align: left;
+    width: 100%;
+    border: none;
+    background-color: #f9f9f9;
+    border-bottom: 1px solid #ddd;
+    cursor: pointer;
+  }
+
+  .dropdown-content button:hover {
+    background-color: #f1f1f1;
+  }
+
+  .dropdown:hover .dropdown-content {
+    display: block;
+  }
+  body {
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+    color: #333;
+  }
+
+  header {
+    background-color: #333;
+    color: #fff;
+    padding: 20px;
+    text-align: center;
+  }
+
+
+
+  main {
+    padding: 20px;
+    max-width: 900px; 
+    margin: 20px auto;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  }
+
+  h2 {
+    margin-top: 0;
+    text-align: center;
+  }
+
+  table.deployments {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+  }
+
+  th, td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+  }
+
+  th {
+    background-color: #f0f0f0;
+  }
+
+  .status {
+    padding: 5px 10px;
+    border-radius: 4px;
+  }
+
+  .status.online {
+    background-color: #4CAF50;
+    color: #fff;
+  }
+
+  .status.offline {
+    background-color: #f44336;
+    color: #fff;
+  }
+
+  button {
+    background-color: #4CAF50;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease; 
+  }
+
+  button:hover {
+    background-color: #45a049;
+  }
+
+  form {
+    display: inline-block;
+    margin-bottom: 20px;
+  }
+
+  .actions {
+    text-align: center;
+  }
+  nav a {
+    display: inline-block;
+    margin: 0 10px; 
+    padding: 8px 15px;
+    background-color: #4CAF50; 
+    color: #fff; 
+    text-decoration: none;
+    border-radius: 4px; 
+    transition: background-color 0.3s ease; 
+  }
+  
+  nav a:hover {
+    background-color: #45a049; 
+  }
+
 </style>
 </html>

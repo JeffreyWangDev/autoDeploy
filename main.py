@@ -176,6 +176,25 @@ async def logout(request: Request):
     response.delete_cookie(key="access_token") 
     return response
 
+@app.post("/repull_rerun/{name}", response_class=JSONResponse)
+async def repull_rerun_server(name: str, request: Request, current_user: str = Depends(get_current_user)):
+    cheek_user(request)
+    conn = sqlite3.connect("server_deployments.db")  # Replace with your DB path if needed
+    cursor = conn.cursor()
+    cursor.execute("SELECT image_link, extra_flags, port FROM deployments WHERE name=?", (name,))
+    deployment = cursor.fetchone()
+    conn.close()
+    if deployment:
+        image_link, extra_flags_str, port = deployment
+        extra_flags = extra_flags_str.split(", ") if extra_flags_str else None
+        if repull_rerun_container(image_link, name, port, extra_flags):
+            return JSONResponse({"message": "Server repull and rerun successful!"})
+        else:
+            raise HTTPException(status_code=500, detail=f"Failed to repull and rerun server '{name}'.")
+    else:
+        raise HTTPException(status_code=404, detail=f"Server '{name}' not found.")
+
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
     
