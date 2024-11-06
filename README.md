@@ -14,7 +14,7 @@ AutoDeploy is a web application that allows users to deploy, manage, and monitor
 
 1. **Clone the repository**:
     ```sh
-    git clone https://github.com/yourusername/autoDeploy.git
+    git clone https://github.com/jeffreywangdev/autoDeploy.git
     cd autoDeploy
     ```
 
