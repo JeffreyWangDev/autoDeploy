@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Server Deployments</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script>
+    // ... (Your existing deployServer() function) ...
+  </script>
+</head>
+<body>
+  <header>
+    <h1>Server Deployments</h1>
+    <nav>
+      {% if user %}
+        <p>Logged in as: {{ user }}</p>
+        <a href="/logout">Logout</a>
+      {% else %}
+        <a href="/login">Login</a>
+      {% endif %}
+    </nav>
+  </header>
+
+  <main>
+    <h2>Your Deployments</h2>
+    <table class="deployments">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Subdomain</th>
+          <th>Port</th>
+          <th>Status</th>
+          <th>Image Link</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for deployment in deployments %}
+        <tr>
+          <td>{{ deployment[1] }}</td>
+          <td>{{ deployment[2] }}</td>
+          <td>{{ deployment[4] }}</td>
+          <td>
+            {% if deployment[7] == 1 %}
+              <span class="status online">Online</span>
+            {% else %}
+              <span class="status offline">Offline</span>
+            {% endif %}
+          </td>
+          <td>
+            <a href="{{ deployment[5] }}" target="_blank">{{ deployment[5] }}</a>
+          </td>
+          <td>
+            <form method="post" action="/remove/{{ deployment[1] }}">
+              <button type="submit">Remove</button>
+            </form>
+            {% if deployment[7] == 1 %}
+              <form method="post" action="/stop/{{ deployment[1] }}">
+                <button type="submit">Stop</button>
+              </form>
+            {% else %}
+              <form method="post" action="/start/{{ deployment[1] }}">
+                <button type="submit">Start</button>
+              </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <h2>Deploy New Server</h2>
+    <form id="deploy-form">
+      <label for="name">Name:</label>
+      <input type="text" id="name" name="name" required><br><br>
+
+      <label for="image_link">Image Link:</label>
+      <input type="text" id="image_link" name="image_link" required><br><br>
+
+      <label for="extra_flags">Extra Flags (optional):</label>
+      <input type="text" id="extra_flags" name="extra_flags"><br><br>
+
+      <button type="button" onclick="deployServer()">Deploy</button>
+    </form>
+  </main>
+</body>
+<style>
+    body {
+        font-family: sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f4f4f4;
+        color: #333;
+      }
+      
+      header {
+        background-color: #333;
+        color: #fff;
+        padding: 20px;
+      }
+      
+      nav {
+        text-align: right;
+      }
+      
+      main {
+        padding: 20px;
+        max-width: 800px;
+        margin: 20px auto;
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      }
+      
+      h2 {
+        margin-top: 0;
+      }
+      
+      table.deployments {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+      }
+      
+      th, td {
+        padding: 10px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+      }
+      
+      th {
+        background-color: #f0f0f0;
+      }
+      
+      .status {
+        padding: 5px 10px;
+        border-radius: 4px;
+      }
+      
+      .status.online {
+        background-color: #4CAF50;
+        color: #fff;
+      }
+      
+      .status.offline {
+        background-color: #f44336;
+        color: #fff;
+      }
+      
+      button {
+        background-color: #4CAF50;
+        color: #fff;
+        border: none;
+        padding: 10px 20px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        margin: 4px 2px;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      
+      button:hover {
+        background-color: #45a049;
+      }
+      
+      form {
+        display: inline-block;
+      }
+</style>
+</html>
