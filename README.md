@@ -55,8 +55,6 @@ AutoDeploy is a web application that allows users to deploy, manage, and monitor
 
 Contributions are welcome! Please fork the repository and create a pull request with your changes.
 
-## License
-
 ## Acknowledgements
 
 - [FastAPI](https://fastapi.tiangolo.com/)
