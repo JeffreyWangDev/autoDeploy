@@ -56,7 +56,7 @@
         if (response.ok) {
           const data = await response.json();
           const logsContainer = document.getElementById("logs-container");
-          logsContainer.innerHTML = ""; // Clear existing logs
+          logsContainer.innerHTML = ""; 
 
           data.logs.forEach(logLine => {
             const logEntry = document.createElement("div");
@@ -65,7 +65,7 @@
             logsContainer.appendChild(logEntry);
           });
 
-          logsContainer.style.display = "block"; // Show the logs container
+          logsContainer.style.display = "block";
         } else {
           const error = await response.text();
           alert("Error fetching logs: " + error);
