@@ -9,6 +9,7 @@ AutoDeploy is a web application that allows users to deploy, manage, and monitor
 - **Monitor Status**: View the status of each server deployment (online/offline) and access server URLs.
 - **GitHub OAuth2 Login**: Secure login using GitHub OAuth2.
 - **Database Integration**: Store deployment information in an SQLite database.
+- **Public View**: Anyone can view your servers but only YOU can edit them
 
 ## Installation
 
@@ -54,6 +55,12 @@ AutoDeploy is a web application that allows users to deploy, manage, and monitor
 ## Contributing
 
 Contributions are welcome! Please fork the repository and create a pull request with your changes.
+
+![image](https://github.com/user-attachments/assets/4148d7e6-52fe-4446-b26b-749433b1eb91)
+![image](https://github.com/user-attachments/assets/5b9b843a-d399-40ad-9b33-f7f0c6e7565c)
+![image](https://github.com/user-attachments/assets/5406d465-2ea6-41df-aeab-c8e3ad32db27)
+
+
 
 ## Acknowledgements
 
