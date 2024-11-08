@@ -241,7 +241,7 @@ def repull_rerun_container(image_link, container_name, port, extra_flags=None):
 
         environment = {}
         if extra_flags:
-            for i in extra_flags.split(): 
+            for i in extra_flags: 
                 if i.startswith("-e"):
                     environment[i.split("=")[0].replace("-e","")] = i.split("=")[1]
 
