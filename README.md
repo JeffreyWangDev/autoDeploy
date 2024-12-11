@@ -2,14 +2,6 @@
 
 AutoDeploy is a web application that allows users to deploy, manage, and monitor server instances using Docker containers. It provides a user-friendly interface to start, stop, and remove server deployments, as well as view the status of each deployment.
 
-## Features
-
-- **Deploy New Servers**: Easily deploy new server instances with custom Docker images and flags.
-- **Manage Deployments**: Start, stop, and remove server deployments from the dashboard.
-- **Monitor Status**: View the status of each server deployment (online/offline) and access server URLs.
-- **GitHub OAuth2 Login**: Secure login using GitHub OAuth2.
-- **Database Integration**: Store deployment information in an SQLite database.
-- **Public View**: Anyone can view your servers but only YOU can edit them
 
 ## Installation
 
@@ -44,13 +36,6 @@ AutoDeploy is a web application that allows users to deploy, manage, and monitor
 
 6. **Access the application**:
     Open your browser and navigate to `http://localhost:8000`.
-
-## Usage
-
-- **Login**: Click on the login button and authenticate using your GitHub account.
-- **Deploy Server**: Fill in the server details and click on the "Deploy" button.
-- **Manage Servers**: Use the dashboard to start, stop, or remove server deployments.
-- **Monitor Status**: Check the status of each deployment and access the server URLs.
 
 ## Contributing
 
