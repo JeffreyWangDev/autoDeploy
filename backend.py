@@ -303,6 +303,11 @@ def update_status(name, db_path="server_deployments.db"):
     except docker.errors.NotFound:
         logging.error(f"Error: Docker container '{name}' not found.")
         print(f"Error: Docker container '{name}' not found.")
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        cursor.execute("DELETE from deployments WHERE name = ?", (name,))
+        conn.commit()
+        conn.close()
         return False
     except Exception as e:
         logging.error(f"An error occurred: {e}")
